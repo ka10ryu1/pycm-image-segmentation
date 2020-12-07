@@ -45,10 +45,15 @@ class ImgGenerator(object):
         if seed > 0:
             np.random.seed(seed)
 
-        self.reset(white)
+        self._white = white
+        self.reset()
 
     @property
     def img(self):
+        if self._img is None:
+            print('REPLACE BLACK IMG')
+            return self.reset()
+
         return self._img.copy()
 
     def _reset(self):
@@ -61,14 +66,10 @@ class ImgGenerator(object):
         return not self._is_mono(img)
 
     def _gray(self, img):
-        if self._is_color(img):
-            return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return img if self._is_mono(img) else cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     def _bgr(self, img):
-        if self._is_mono(img):
-            return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-        return img
+        return img if self._is_color(img) else cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     def _rgb(self, img):
         flg = cv2.COLOR_GRAY2BGR if self._is_mono(img) else cv2.COLOR_BGR2RGB
@@ -84,9 +85,9 @@ class ImgGenerator(object):
         _max = np.min([_max, 255])
         return (rndint(_min, _max), rndint(_min, _max), rndint(_min, _max))
 
-    def reset(self, white=False):
+    def reset(self):
         self._img = self._reset()
-        if white:
+        if self._white:
             self._img.fill(255)
 
     def to_gray(self):
@@ -102,7 +103,7 @@ class ImgGenerator(object):
         return self
 
     def to_binary(self, th=125, max_val=255, flg=cv2.THRESH_BINARY):
-        img = self._gray(self.img)
+        img = self._gray(self._img)
         self._img = cv2.threshold(img, th, max_val, flg)[1]
         return self
 
