@@ -1,4 +1,4 @@
-# pycm-image-segmantaion
+# pycm-image-segmantation
 
 Deep learning（セグメンテーション）に PyCM を使う場合のサンプルです
 
