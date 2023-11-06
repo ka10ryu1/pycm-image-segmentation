@@ -46,6 +46,7 @@ def main(args):
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     torch.manual_seed(args.seed)
     device = torch.device('cuda' if use_cuda else 'cpu')
+    print(device)
 
     train_kwargs = {'batch_size': args.batch_size}
     test_kwargs = {'batch_size': args.test_batch_size}
@@ -83,8 +84,11 @@ def main(args):
 
     # 学習済みの重みを利用する場合
     else:
+        test_loader = DataLoader(MyDataset(102, img_num=16), **test_kwargs)
         state = torch.load(
-            args.weight.as_posix(), map_location=lambda storage, loc: storage
+            args.weight.as_posix(),
+            map_location=torch.device('cpu'),
+            # map_location=lambda storage, loc: storage
         )
         model.load_state_dict(state)
 
