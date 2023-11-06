@@ -9,6 +9,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from generate import MyDataset
 from util import command, confusion_mat
+from accuracy import dice
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -31,15 +32,19 @@ def train(args, model, device, train_loader, optimizer, epoch):
 def test(model, device, test_loader):
     model.eval()
     test_loss = 0
+    dice_acc = 0
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             # sum up batch loss
             test_loss += F.mse_loss(output, target)
+            dice_acc += dice(output, target)
 
     test_loss /= len(test_loader.dataset)
-    print('\nTest set: Average loss: {:.9f}\n'.format(test_loss))
+    print(
+        f'Test set | Average loss: {test_loss:.9f} | Accuracy: {dice_acc:6.2%}'
+    )
 
 
 def main(args):
