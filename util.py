@@ -37,7 +37,10 @@ def _none_chk(val):
     return 0 if val == 'None' else val
 
 
-def confusion_no_show(model, device, test_loader, fmt='6.1%'):
+def confusion_no_show(model, device, test_loader, fmt='6.1%', add_out=False):
+    if add_out:
+        return confusion_no_show3(model, device, test_loader, fmt)
+
     model.eval()
     img = []
     print(' TPR    PPV    G      J      F1     AUPR')
