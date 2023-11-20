@@ -73,6 +73,55 @@ def confusion_no_show(model, device, test_loader, fmt='6.1%'):
     return np.hstack(img)
 
 
+def add_border(img):
+    return cv2.copyMakeBorder(img, 0, 1, 0, 1, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+
+
+def confusion_no_show3(model, device, test_loader, fmt='6.1%'):
+    model.eval()
+    img = []
+    print(' TPR    PPV    G      J      F1     AUPR')
+    with torch.no_grad():
+        # バッチサイズ毎に画像を読み込み
+        for data, target in test_loader:
+            tgt = _to_imgs(target)
+            src = _to_imgs(data, binary=False)
+            data, target = data.to(device), target.to(device)
+            out = _to_imgs(model(data).cpu())
+            # 画像一枚ずつ処理
+            for x, y, z in zip(tgt, out, src):
+                # 画像の可視化に必要な処理
+                b = np.zeros_like(x)
+                tp = cv2.bitwise_and(x, y)
+                ntp = cv2.bitwise_not(tp)
+                fp = cv2.bitwise_and(y, ntp)
+                fn = cv2.bitwise_and(x, ntp)
+                dst = cv2.merge([b, tp + fp, fn + fp])
+                y2 = cv2.cvtColor(y, cv2.COLOR_GRAY2BGR)
+                img.append(
+                    cv2.resize(
+                        np.vstack([
+                            add_border(z),
+                            add_border(y2),
+                            add_border(dst)
+                        ]), (300, 900)
+                    )
+                )
+
+                # PyCM用の処理
+                x = x.reshape(-1) // 255
+                y = y.reshape(-1) // 255
+                cm = ConfusionMatrix(actual_vector=x, predict_vector=y)
+
+                print(
+                    f'{_none_chk(cm.TPR[1]):{fmt}},{_none_chk(cm.PPV[1]):{fmt}},' +
+                    f'{_none_chk(cm.G[1]):{fmt}},{_none_chk(cm.J[1]):{fmt}},' +
+                    f'{_none_chk(cm.F1[1]):{fmt}},{_none_chk(cm.AUPR[1]):{fmt}}'
+                )
+
+    return np.hstack(img)
+
+
 def confusion_mat(model, device, test_loader, fmt='6.1%'):
     model.eval()
     # input_imgs = list()
