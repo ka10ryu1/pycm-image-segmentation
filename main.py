@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*-coding: utf-8 -*-
 # pylint: disable=invalid-name,no-member
+import cv2
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -8,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 
 from generate import MyDataset
-from util import command, confusion_mat
+from util import command, confusion_mat, confusion_no_show
 from accuracy import dice
 
 
@@ -89,7 +90,7 @@ def main(args):
 
     # 学習済みの重みを利用する場合
     else:
-        test_loader = DataLoader(MyDataset(102, img_num=16), **test_kwargs)
+        test_loader = DataLoader(MyDataset(102, img_num=8), **test_kwargs)
         state = torch.load(
             args.weight.as_posix(),
             map_location=torch.device('cpu'),
@@ -98,7 +99,10 @@ def main(args):
         model.load_state_dict(state)
 
     # PyCMで混同行列を計算
-    confusion_mat(model, device, test_loader)
+    # confusion_mat(model, device, test_loader)
+    img = confusion_no_show(model, device, test_loader, add_out=True)
+    cv2.imshow('py3 result', img)
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
